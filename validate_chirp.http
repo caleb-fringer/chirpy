@@ -1,0 +1,25 @@
+@endpoint = localhost:8080/api/validate_chirp
+
+### ValidChirp
+POST {{endpoint}}
+Content-Type: application/json
+
+{
+    "body": "This is a valid chirp!"
+}
+
+### InvalidChirp
+POST {{endpoint}}
+Content-Type: application/json
+
+{
+    "body": "This is a very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very long chirp!"
+}
+
+### ProfaneChirp
+POST {{endpoint}}
+Content-Type: application/json
+
+{
+   "body": "Sharbert ! I've gotten into the kerfuffle ! FORNAX !" 
+}
