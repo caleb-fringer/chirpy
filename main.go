@@ -26,9 +26,16 @@ func (cfg *apiConfig) reset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Hits: %d\n", cfg.fsHits.Load())))
+	metricsPage := fmt.Sprintf(`
+    <html>
+        <body>
+            <h1>Welcome, Chirpy Admin</h1>
+            <p>Chirpy has been visited %d times!</p>
+        </body>
+    </html>`, cfg.fsHits.Load())
+	w.Write([]byte(metricsPage))
 }
 
 func main() {
@@ -48,9 +55,9 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	mux.HandleFunc("POST /api/reset", apiCfg.reset)
+	mux.HandleFunc("POST /admin/reset", apiCfg.reset)
 
-	mux.Handle("GET /api/metrics", apiCfg)
+	mux.Handle("GET /admin/metrics", apiCfg)
 
 	fmt.Printf("Starting server on port %d...", PORT)
 	log.Fatal(server.ListenAndServe())
