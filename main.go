@@ -18,6 +18,7 @@ const ROOT_PATH = "."
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
@@ -26,7 +27,8 @@ func main() {
 
 	dbQueries := database.New(db)
 	apiCfg := &apiConfig{
-		queries: dbQueries,
+		platform: platform,
+		queries:  dbQueries,
 	}
 
 	mux := http.NewServeMux()
@@ -38,6 +40,8 @@ func main() {
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(ROOT_PATH)))))
 
 	mux.HandleFunc("GET /api/healthz", healthz)
+
+	mux.HandleFunc("POST /api/users", apiCfg.createUser)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.reset)
 

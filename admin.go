@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync/atomic"
 
@@ -9,8 +11,9 @@ import (
 )
 
 type apiConfig struct {
-	fsHits  atomic.Int32
-	queries *database.Queries
+	platform string
+	fsHits   atomic.Int32
+	queries  *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -21,7 +24,49 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) reset(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write(json.RawMessage(`"error": "Access forbidden"`))
+		return
+	}
+
 	cfg.fsHits.Store(0)
+	result, err := cfg.queries.DeleteUsers(r.Context())
+
+	if err != nil {
+		log.Printf("Error deleting users: %v\n", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Error deleting users from database"`))
+		return
+	}
+
+	type DeleteResponse struct {
+		RowsAffected int64  `json:"rows_affected"`
+		Message      string `json:"message"`
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	rows, _ := result.RowsAffected()
+	response := DeleteResponse{
+		RowsAffected: rows,
+		Message:      fmt.Sprintf("Deleted %d users.\n", rows),
+	}
+
+	rawRes, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("POST /admin/reset: Error marshalling response\n")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Server error"`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(rawRes)
+	return
 }
 
 func (cfg *apiConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {

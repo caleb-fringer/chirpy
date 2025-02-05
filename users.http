@@ -1,0 +1,9 @@
+@endpoint = localhost:8080/api/users
+
+### CreateUser
+POST {{endpoint}}
+Content-Type: application/json
+
+{
+    "email": "joe.mama@gotem.com"
+}

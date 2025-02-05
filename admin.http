@@ -1,0 +1,4 @@
+@endpoint = localhost:8080/admin
+
+### Reset
+POST {{endpoint}}/reset
