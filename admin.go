@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"sync/atomic"
+
+	"github.com/caleb-fringer/chirpy/internal/database"
 )
 
 type apiConfig struct {
-	fsHits atomic.Int32
+	fsHits  atomic.Int32
+	queries *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
