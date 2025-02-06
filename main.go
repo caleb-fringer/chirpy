@@ -49,6 +49,8 @@ func main() {
 
 	mux.HandleFunc("POST /api/chirps", apiCfg.createChirp)
 
+	mux.HandleFunc("GET /api/chirps", apiCfg.getChirps)
+
 	fmt.Printf("Starting server on port %d...", PORT)
 	log.Fatal(server.ListenAndServe())
 }

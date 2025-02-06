@@ -43,3 +43,25 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 	}
 	return
 }
+
+func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.queries.GetChirps(r.Context())
+	if err != nil {
+		log.Printf("GET /api/chirps: Error retrieving chirps: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Database error"`))
+		return
+	}
+
+	jsonRes, err := json.Marshal(chirps)
+	if err != nil {
+		log.Printf("GET /api/chirps: Error encoding chirps response: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Encoding error"`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonRes)
+	return
+}
