@@ -1,0 +1,10 @@
+@endpoint = localhost:8080/api/chirps
+
+### CreateUser
+POST {{endpoint}}
+Content-Type: application/json
+
+{
+    "body": "I need FARKING some coffee!",
+    "user_id": "09a4b5ce-df9e-481b-a94b-8180d2a27637"
+}
