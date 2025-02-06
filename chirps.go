@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/caleb-fringer/chirpy/internal/database"
+	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +58,29 @@ func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("GET /api/chirps: Error encoding chirps response: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(json.RawMessage(`"error": "Encoding error"`))
+		w.Write(json.RawMessage(`"error": "Error encoding response"`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonRes)
+	return
+}
+
+func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
+	log.Printf("UUID: %v\n", r.PathValue("id"))
+	id := uuid.MustParse(r.PathValue("id"))
+	chirp, err := cfg.queries.GetChirp(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(json.RawMessage(`"error": "Chirp not found"`))
+		return
+	}
+
+	jsonRes, err := json.Marshal(chirp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Error encoding response"`))
 		return
 	}
 

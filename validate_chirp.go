@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 )
 
@@ -24,7 +23,6 @@ func validateChirp(chirp string) (string, bool) {
 func censorProfanity(in string) string {
 	words := strings.Split(in, " ")
 	for i, word := range words {
-		log.Printf("Checking %s for profanity...\n", word)
 		_, ok := profaneWords[strings.ToLower(word)]
 		if ok {
 			words[i] = strings.Repeat("*", 4)
