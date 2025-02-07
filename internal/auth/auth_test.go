@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -44,5 +45,20 @@ func TestValidateJWT(t *testing.T) {
 	}
 	if id != retrievedId {
 		t.Fatalf("IDs don't match: expected: %s got: %s\n", id, retrievedId)
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	tokenStr := "asfeqjwrlkelkj1234132"
+	header := http.Header{}
+	header.Add("Authorization", "Bearer "+tokenStr)
+
+	token, err := GetBearerToken(header)
+	if err != nil {
+		t.Fatalf("Error getting bearer token: %v\n", err)
+	}
+
+	if token != tokenStr {
+		t.Fatalf("Extracted token does not match expected value: expected %s got %s", tokenStr, token)
 	}
 }
