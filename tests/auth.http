@@ -1,0 +1,35 @@
+@host = localhost:8080
+
+### Login
+POST {{host}}/api/login
+Content-Type: application/json
+
+{
+    "email": "saul@bettercall.com",
+    "password": "123456"
+}
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("auth_token", body.token)
+    client.global.set("refresh_token", body.response_token)
+%}
+
+### CreateAuthorizedChirp
+POST {{host}}/api/chirps
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+    "body": "Hi"
+}
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("chirp_id", body.id)
+%}
+
+### GetCreatedChirp
+GET {{host}}/api/chirps/{{chirp_id}}

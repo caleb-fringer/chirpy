@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,9 +31,9 @@ func CheckPasswordHash(password, hash string) error {
 	return nil
 }
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
 	issueTime := time.Now()
-	expireTime := issueTime.Add(expiresIn)
+	expireTime := issueTime.Add(time.Hour)
 	claims := jwt.RegisteredClaims{
 		Issuer:    "chirpy",
 		IssuedAt:  jwt.NewNumericDate(issueTime),
@@ -98,4 +100,16 @@ func GetBearerToken(headers http.Header) (string, error) {
 	}
 
 	return token, nil
+}
+
+const REFRESH_TOKEN_LENGTH = 32
+
+func MakeRefreshToken() (string, error) {
+	token := make([]byte, REFRESH_TOKEN_LENGTH)
+	_, err := rand.Read(token)
+	if err != nil {
+		return "", fmt.Errorf("Error creating refresh token: %v", err)
+	}
+
+	return hex.EncodeToString(token), nil
 }

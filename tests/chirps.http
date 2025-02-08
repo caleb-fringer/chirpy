@@ -1,22 +1,4 @@
 @endpoint = localhost:8080/api/chirps
 
-### CreateChirp1
-POST {{endpoint}}
-Content-Type: application/json
-
-{
-    "body": "I need FARKING some coffee!",
-    "user_id": "329bc5f1-cea0-40d4-ae5f-e6a35c86f5d9"
-}
-
-### CreateChirp2
-POST {{endpoint}}
-Content-Type: application/json
-
-{
-    "body": "Hiya!",
-    "user_id": "329bc5f1-cea0-40d4-ae5f-e6a35c86f5d9"
-}
-
 ### GetChirps
 GET {{endpoint}}

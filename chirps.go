@@ -10,8 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type createChirpReqParams struct {
+	Body string `json:"body"`
+}
+
 func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
-	reqBody := &database.CreateChirpParams{}
+	reqBody := &createChirpReqParams{}
 
 	err := json.NewDecoder(r.Body).Decode(reqBody)
 	if err != nil {
@@ -40,18 +44,19 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		w.Write(json.RawMessage(`"error": "Invalid token."`))
 		return
 	}
-	reqBody.UserID.UUID = id
-	reqBody.UserID.Valid = true
 
-	censored, ok := validateChirp(reqBody.Body)
+	censoredChirp, ok := validateChirp(reqBody.Body)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(json.RawMessage(`"error": "Chirp is too long. Max chirp length is 140 characters."`))
 		return
 	}
-	reqBody.Body = censored
 
-	chirp, err := cfg.queries.CreateChirp(r.Context(), *reqBody)
+	dbParams := database.CreateChirpParams{
+		Body:   censoredChirp,
+		UserID: id,
+	}
+	chirp, err := cfg.queries.CreateChirp(r.Context(), dbParams)
 
 	if err != nil {
 		log.Printf("POST /api/chirps: Error creating chirp: %v\n", err)
@@ -93,7 +98,7 @@ func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 	log.Printf("UUID: %v\n", r.PathValue("id"))
 	id := uuid.MustParse(r.PathValue("id"))
-	chirp, err := cfg.queries.GetChirp(r.Context(), id)
+	chirp, err := cfg.queries.GetChirpById(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(json.RawMessage(`"error": "Chirp not found"`))

@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -32,7 +31,7 @@ func TestCheckPasswordHash(t *testing.T) {
 
 func TestMakeJWT(t *testing.T) {
 	var err error
-	token, err = MakeJWT(id, secret, 5*time.Minute)
+	token, err = MakeJWT(id, secret)
 	if err != nil {
 		t.Fatalf("Error making JWT: %v\n", err)
 	}
@@ -60,5 +59,15 @@ func TestGetBearerToken(t *testing.T) {
 
 	if token != tokenStr {
 		t.Fatalf("Extracted token does not match expected value: expected %s got %s", tokenStr, token)
+	}
+}
+
+func TestMakeRefreshToken(t *testing.T) {
+	token, err := MakeRefreshToken()
+	if err != nil {
+		t.Fatalf("Error creating refresh token: %v\n", err)
+	}
+	if len(token) != REFRESH_TOKEN_LENGTH*2 {
+		t.Fatal("Token should be 32 bytes (16 hex characters)")
 	}
 }

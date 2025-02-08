@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"github.com/caleb-fringer/chirpy/internal/auth"
+	"github.com/caleb-fringer/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 type loginResponse struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Token     string    `json:"token"`
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token"`
+	RefreshToken string    `json:"refresh_token"`
 }
 
 type loginRequestParams struct {
@@ -54,7 +56,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		tokenDuration = time.Hour
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.secretKey, tokenDuration)
+	token, err := auth.MakeJWT(user.ID, cfg.secretKey)
 	if err != nil {
 		log.Printf("POST /api/login: Error making JWT: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -62,12 +64,35 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		log.Printf("POST /api/login: Error making refresh token: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Error creating refresh token"`))
+		return
+	}
+
+	refreshTokenParams := database.CreateRefreshParams{
+		Token:     refreshToken,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(time.Hour),
+	}
+
+	err = cfg.queries.CreateRefresh(r.Context(), refreshTokenParams)
+	if err != nil {
+		log.Printf("POST /api/login: Error storing refresh token in database: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Error creating refresh token"`))
+		return
+	}
+
 	response := &loginResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken,
 	}
 
 	resJson, err := json.Marshal(response)
