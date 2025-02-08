@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync/atomic"
 
 	"github.com/caleb-fringer/chirpy/internal/database"
 	"github.com/joho/godotenv"
@@ -15,10 +16,18 @@ import (
 const PORT = 8080
 const ROOT_PATH = "."
 
+type apiConfig struct {
+	platform  string
+	fsHits    atomic.Int32
+	queries   *database.Queries
+	secretKey string
+}
+
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	secretKey := os.Getenv("SECRET_KEY")
 	db, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
@@ -27,8 +36,9 @@ func main() {
 
 	dbQueries := database.New(db)
 	apiCfg := &apiConfig{
-		platform: platform,
-		queries:  dbQueries,
+		platform:  platform,
+		queries:   dbQueries,
+		secretKey: secretKey,
 	}
 
 	mux := http.NewServeMux()

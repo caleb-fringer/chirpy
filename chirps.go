@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/caleb-fringer/chirpy/internal/auth"
 	"github.com/caleb-fringer/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -19,6 +20,28 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		w.Write(json.RawMessage(`"error": "Server error decoding request body"`))
 		return
 	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("POST /api/chirps: Error retrieving bearer token from authorization header: %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		switch err.(type) {
+		case auth.HeaderNotFoundError:
+			w.Write(json.RawMessage(`"error": "Please provide your JWT in the authorization header of your request."`))
+		case auth.WrongAuthorizationSchemeError:
+			w.Write(json.RawMessage(`"error": "Please use the Bearer authorization scheme to authorize your request."`))
+		}
+		return
+	}
+
+	id, err := auth.ValidateJWT(token, cfg.secretKey)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`"error": "Invalid token."`))
+		return
+	}
+	reqBody.UserID.UUID = id
+	reqBody.UserID.Valid = true
 
 	censored, ok := validateChirp(reqBody.Body)
 	if !ok {

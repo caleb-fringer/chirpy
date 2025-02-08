@@ -10,13 +10,13 @@ import (
 	"github.com/caleb-fringer/chirpy/internal/database"
 )
 
-type reqParams struct {
+type createUserReqParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
-	params := &reqParams{}
+	params := &createUserReqParams{}
 	rawReqBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("POST /api/users: Error decoding requested user data: %v\n", err)

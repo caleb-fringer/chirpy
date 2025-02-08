@@ -15,10 +15,16 @@ type loginResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
+}
+
+type loginRequestParams struct {
+	createUserReqParams
+	ExpiresInSeconds int `json:"expires_in_seconds,omitempty"`
 }
 
 func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
-	reqParams := &reqParams{}
+	reqParams := &loginRequestParams{}
 	reqDecoder := json.NewDecoder(r.Body)
 	err := reqDecoder.Decode(reqParams)
 	if err != nil {
@@ -43,11 +49,25 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenDuration := time.Second * time.Duration(reqParams.ExpiresInSeconds)
+	if tokenDuration == 0 || tokenDuration > time.Hour {
+		tokenDuration = time.Hour
+	}
+
+	token, err := auth.MakeJWT(user.ID, cfg.secretKey, tokenDuration)
+	if err != nil {
+		log.Printf("POST /api/login: Error making JWT: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`"error": "Error creating JWT"`))
+		return
+	}
+
 	response := &loginResponse{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+		Token:     token,
 	}
 
 	resJson, err := json.Marshal(response)

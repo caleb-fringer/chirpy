@@ -79,6 +79,13 @@ func (e HeaderNotFoundError) Error() string {
 	return fmt.Sprintf("%s header not found.", e.Header)
 }
 
+type WrongAuthorizationSchemeError struct {
+}
+
+func (e WrongAuthorizationSchemeError) Error() string {
+	return "Wrong authorization scheme. Please use the Bearer scheme"
+}
+
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
