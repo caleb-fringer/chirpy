@@ -1,4 +1,4 @@
--- name: CreateRefresh :exec
+-- name: CreateRefreshToken :exec
 INSERT INTO refresh_tokens (
     token, 
     created_at, 
@@ -14,3 +14,7 @@ INSERT INTO refresh_tokens (
     $3,
     NULL
 );
+
+-- name: GetRefreshTokenById :one
+SELECT * from refresh_tokens
+WHERE token = $1;
