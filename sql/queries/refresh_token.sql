@@ -18,3 +18,7 @@ INSERT INTO refresh_tokens (
 -- name: GetRefreshTokenById :one
 SELECT * from refresh_tokens
 WHERE token = $1;
+
+-- name: GetUsernameByRefreshToken :one
+SELECT user_id FROM refresh_tokens
+WHERE token = $1;

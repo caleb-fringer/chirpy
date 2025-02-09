@@ -59,3 +59,15 @@ func (q *Queries) GetRefreshTokenById(ctx context.Context, token string) (Refres
 	)
 	return i, err
 }
+
+const getUsernameByRefreshToken = `-- name: GetUsernameByRefreshToken :one
+SELECT user_id FROM refresh_tokens
+WHERE token = $1
+`
+
+func (q *Queries) GetUsernameByRefreshToken(ctx context.Context, token string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getUsernameByRefreshToken, token)
+	var user_id uuid.UUID
+	err := row.Scan(&user_id)
+	return user_id, err
+}

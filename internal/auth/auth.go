@@ -32,7 +32,7 @@ func CheckPasswordHash(password, hash string) error {
 }
 
 func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
-	issueTime := time.Now()
+	issueTime := time.Now().UTC()
 	expireTime := issueTime.Add(time.Hour)
 	claims := jwt.RegisteredClaims{
 		Issuer:    "chirpy",

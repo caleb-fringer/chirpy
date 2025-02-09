@@ -72,13 +72,13 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshTokenParams := database.CreateRefreshParams{
+	refreshTokenParams := database.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(time.Hour),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 	}
 
-	err = cfg.queries.CreateRefresh(r.Context(), refreshTokenParams)
+	err = cfg.queries.CreateRefreshToken(r.Context(), refreshTokenParams)
 	if err != nil {
 		log.Printf("POST /api/login: Error storing refresh token in database: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)

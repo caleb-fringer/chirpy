@@ -1,0 +1,24 @@
+@host = localhost:8080
+
+### Login
+POST {{host}}/api/login
+Content-Type: application/json
+
+{
+    "email": "joe.mama@gotem.com",
+    "password": "letmein"
+}
+
+# @lang=lua
+> {%
+    local body = vim.json.decode(response.body)
+    client.global.set("auth_token", body.token)
+    client.global.set("refresh_token", body.refresh_token)
+%}
+
+### RefreshToken
+POST {{host}}/api/refresh
+Authorization: Bearer {{refresh_token}}
+Content-Type: application/json
+
+{}

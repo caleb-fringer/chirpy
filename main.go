@@ -65,6 +65,8 @@ func main() {
 
 	mux.HandleFunc("POST /api/login", apiCfg.login)
 
-	fmt.Printf("Starting server on port %d...", PORT)
+	mux.HandleFunc("POST /api/refresh", apiCfg.refresh)
+
+	fmt.Printf("Starting server on port %d...\n", PORT)
 	log.Fatal(server.ListenAndServe())
 }
