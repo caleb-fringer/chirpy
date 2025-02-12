@@ -67,6 +67,8 @@ func main() {
 
 	mux.HandleFunc("POST /api/refresh", apiCfg.refresh)
 
+	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+
 	fmt.Printf("Starting server on port %d...\n", PORT)
 	log.Fatal(server.ListenAndServe())
 }

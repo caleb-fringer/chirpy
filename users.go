@@ -25,7 +25,7 @@ type createUserResponse struct {
 }
 
 func validPassword(password string) bool {
-	return len(password) > 7
+	return len(password) > 0
 }
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {

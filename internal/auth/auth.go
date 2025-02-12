@@ -59,7 +59,6 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	})
 
 	if err != nil {
-		log.Printf("Error parsing JWT: %v\n", err)
 		return uuid.UUID{}, err
 	}
 

@@ -64,7 +64,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken, err := auth.MakeRefreshToken()
+	refreshTokenStr, err := auth.MakeRefreshToken()
 	if err != nil {
 		log.Printf("POST /api/login: Error making refresh token: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -73,12 +73,12 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refreshTokenParams := database.CreateRefreshTokenParams{
-		Token:     refreshToken,
+		Token:     refreshTokenStr,
 		UserID:    user.ID,
 		ExpiresAt: time.Now().UTC().Add(time.Hour),
 	}
 
-	err = cfg.queries.CreateRefreshToken(r.Context(), refreshTokenParams)
+	refreshToken, err := cfg.queries.CreateRefreshToken(r.Context(), refreshTokenParams)
 	if err != nil {
 		log.Printf("POST /api/login: Error storing refresh token in database: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -92,7 +92,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:    user.UpdatedAt,
 		Email:        user.Email,
 		Token:        token,
-		RefreshToken: refreshToken,
+		RefreshToken: refreshToken.Token,
 	}
 
 	resJson, err := json.Marshal(response)

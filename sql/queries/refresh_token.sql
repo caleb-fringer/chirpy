@@ -1,4 +1,4 @@
--- name: CreateRefreshToken :exec
+-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
     token, 
     created_at, 
@@ -13,7 +13,7 @@ INSERT INTO refresh_tokens (
     $2,
     $3,
     NULL
-);
+) RETURNING *;
 
 -- name: GetRefreshTokenById :one
 SELECT * from refresh_tokens
@@ -21,4 +21,9 @@ WHERE token = $1;
 
 -- name: GetUsernameByRefreshToken :one
 SELECT user_id FROM refresh_tokens
+WHERE token = $1;
+
+-- name: RevokeRefreshToken :exec
+UPDATE refresh_tokens
+SET revoked_at = NOW(), updated_at = NOW()
 WHERE token = $1;

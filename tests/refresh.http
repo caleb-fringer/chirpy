@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
     "email": "joe.mama@gotem.com",
-    "password": "letmein"
+    "password": "letmein!"
 }
 
 # @lang=lua
@@ -18,6 +18,13 @@ Content-Type: application/json
 
 ### RefreshToken
 POST {{host}}/api/refresh
+Authorization: Bearer {{refresh_token}}
+Content-Type: application/json
+
+{}
+
+### RevokeToken
+POST {{host}}/api/revoke
 Authorization: Bearer {{refresh_token}}
 Content-Type: application/json
 
