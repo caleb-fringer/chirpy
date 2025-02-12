@@ -24,6 +24,10 @@ type createUserResponse struct {
 	Email     string    `json:"email"`
 }
 
+func validPassword(password string) bool {
+	return len(password) > 7
+}
+
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	params := &createUserReqParams{}
 	rawReqBody, err := io.ReadAll(r.Body)
@@ -36,12 +40,22 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.Unmarshal(rawReqBody, params)
+
+	if !validPassword(params.Password) {
+		log.Printf("POST /api/users: Error hashing password: %v\n", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(500)
+		w.Write(json.RawMessage(`{"error": "Invalid password. Minimum password length is 8 characters."}`))
+		return
+	}
+
 	hash, err := auth.HashPassword(params.Password)
 	if err != nil {
 		log.Printf("POST /api/users: Error hashing password: %v\n", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(500)
 		w.Write(json.RawMessage(`{"error": "Bad email/password"}`))
+		return
 	}
 
 	userParams := database.CreateUserParams{Email: params.Email, HashedPassword: hash}

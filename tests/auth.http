@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
     "email": "joe.mama@gotem.com",
-    "password": "letmein"
+    "password": "letmein!"
 }
 
 # @lang=lua
