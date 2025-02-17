@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -82,6 +83,38 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const updateUsernamePassword = `-- name: UpdateUsernamePassword :one
+UPDATE users
+SET email = $2, hashed_password = $3, updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, email
+`
+
+type UpdateUsernamePasswordParams struct {
+	ID             uuid.UUID `json:"id"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"hashed_password"`
+}
+
+type UpdateUsernamePasswordRow struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
+
+func (q *Queries) UpdateUsernamePassword(ctx context.Context, arg UpdateUsernamePasswordParams) (UpdateUsernamePasswordRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUsernamePassword, arg.ID, arg.Email, arg.HashedPassword)
+	var i UpdateUsernamePasswordRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
 	)
 	return i, err
 }

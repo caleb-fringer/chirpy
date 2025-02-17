@@ -90,3 +90,74 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(rawResBody)
 	return
 }
+
+func (cfg *apiConfig) updateUser(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("PUT /api/users: Error reading request headers: %v\n", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Missing/malformed access token."}`))
+		return
+	}
+
+	uuid, err := auth.ValidateJWT(token, cfg.secretKey)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Missing/malformed access token."}`))
+		return
+	}
+
+	rawReqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("PUT /api/users: Error reading request body: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Server error"}`))
+		return
+	}
+
+	reqBody := &struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}{}
+
+	err = json.Unmarshal(rawReqBody, reqBody)
+	if err != nil {
+		log.Printf("PUT /api/users: Error unmarshalling request body: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Server error"}`))
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(reqBody.Password)
+	if err != nil {
+		log.Printf("PUT /api/users: Error hashing password: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Server error"}`))
+		return
+	}
+
+	updateUserParams := database.UpdateUsernamePasswordParams{
+		ID:             uuid,
+		Email:          reqBody.Email,
+		HashedPassword: hashedPassword,
+	}
+	user, err := cfg.queries.UpdateUsernamePassword(r.Context(), updateUserParams)
+	if err != nil {
+		log.Printf("PUT /api/users: Error updating user %d: %v\n", uuid, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Server error"}`))
+		return
+	}
+
+	rawRes, err := json.Marshal(&user)
+	if err != nil {
+		log.Printf("PUT /api/users: Error marshalling response: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Server error"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(rawRes)
+	return
+}
