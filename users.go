@@ -18,10 +18,11 @@ type createUserReqParams struct {
 }
 
 type createUserResponse struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Email       string    `json:"email"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
 func validPassword(password string) bool {
@@ -75,6 +76,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		user.CreatedAt,
 		user.UpdatedAt,
 		user.Email,
+		user.IsChirpyRed,
 	}
 
 	rawResBody, err := json.Marshal(res)

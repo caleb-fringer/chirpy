@@ -73,6 +73,7 @@ func main() {
 
 	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirp)
 
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.subscribe)
 	fmt.Printf("Starting server on port %d...\n", PORT)
 	log.Fatal(server.ListenAndServe())
 }
