@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -114,5 +115,50 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonRes)
+	return
+}
+
+func (cfg *apiConfig) deleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpId := r.PathValue("chirpID")
+
+	chirpUUID := uuid.MustParse(chirpId)
+	chirp, err := cfg.queries.GetChirpById(r.Context(), chirpUUID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(json.RawMessage(fmt.Sprintf(`{"error": "Could not find chirp with id %s"}`, chirpId)))
+		return
+	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("DELETE /api/chirps/%s: Error reading request headers: %v\n", chirpId, err)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Missing/malformed access token."}`))
+		return
+	}
+
+	userId, err := auth.ValidateJWT(token, cfg.secretKey)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Missing/malformed access token."}`))
+		return
+	}
+
+	if userId != chirp.UserID {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write(json.RawMessage(`{"error": "You do not have permission to delete this chirp."}`))
+		return
+	}
+
+	err = cfg.queries.DeleteChirpById(r.Context(), chirpUUID)
+	if err != nil {
+		log.Printf("DELETE /api/chirps/%s: Error deleting chirp from database: %v\n", chirpId, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(json.RawMessage(`{"error": "Database error"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	w.Write(nil)
 	return
 }

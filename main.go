@@ -71,6 +71,8 @@ func main() {
 
 	mux.HandleFunc("PUT /api/users", apiCfg.updateUser)
 
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirp)
+
 	fmt.Printf("Starting server on port %d...\n", PORT)
 	log.Fatal(server.ListenAndServe())
 }
