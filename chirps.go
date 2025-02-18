@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/caleb-fringer/chirpy/internal/auth"
 	"github.com/caleb-fringer/chirpy/internal/database"
@@ -75,12 +76,34 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.queries.GetChirps(r.Context())
-	if err != nil {
-		log.Printf("GET /api/chirps: Error retrieving chirps: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(json.RawMessage(`"error": "Database error"`))
-		return
+	var chirps []database.Chirp
+	var err error
+	authorId := r.URL.Query().Get("author_id")
+
+	if authorId != "" {
+		authorUUID := uuid.MustParse(authorId)
+		chirps, err = cfg.queries.GetChirpsByAuthorId(r.Context(), authorUUID)
+		if err != nil {
+			log.Printf("GET /api/chirps: Error retrieving chirps: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(json.RawMessage(`"error": "Database error"`))
+			return
+		}
+	} else {
+		chirps, err = cfg.queries.GetChirps(r.Context())
+		if err != nil {
+			log.Printf("GET /api/chirps: Error retrieving chirps: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(json.RawMessage(`"error": "Database error"`))
+			return
+		}
+	}
+
+	sortBy := r.URL.Query().Get("sort")
+	if sortBy == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+		})
 	}
 
 	jsonRes, err := json.Marshal(chirps)
