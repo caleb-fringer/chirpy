@@ -6,12 +6,26 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/caleb-fringer/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
 const UPGRADE_EVENT = "user.upgraded"
 
 func (cfg *apiConfig) subscribe(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Please provide an API key in the Authorization header"}`))
+		return
+	}
+
+	if apiKey != cfg.polkaKey {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(json.RawMessage(`{"error": "Invalid API key"}`))
+		return
+	}
+
 	reqBody := &struct {
 		Event string `json:"event"`
 		Data  struct {
